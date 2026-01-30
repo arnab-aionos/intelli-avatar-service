@@ -1,0 +1,49 @@
+# Core Dependencies
+pipecat-ai>=0.0.40
+fastapi>=0.110.0
+uvicorn[standard]>=0.27.0
+python-dotenv>=1.0.0
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# WebRTC
+aiortc>=1.6.0
+aiohttp>=3.9.0
+# Note: We use Daily.co REST API via aiohttp directly, no separate SDK needed
+
+# AI Services
+openai>=1.12.0
+edge-tts>=6.1.10
+
+# Audio/Video Processing
+opencv-python>=4.9.0
+numpy>=1.26.0
+torch>=2.0.0
+torchaudio>=2.0.0
+torchvision>=0.15.0
+librosa>=0.10.0
+soundfile>=0.12.0
+
+# Session Management
+redis>=5.0.0
+aioredis>=2.0.1
+
+# Database (for user/session persistence)
+sqlalchemy>=2.0.0
+asyncpg>=0.29.0
+alembic>=1.13.0
+
+# Authentication
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-multipart>=0.0.9
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+httpx>=0.26.0
+
+# Development
+black>=24.0.0
+ruff>=0.2.0
+mypy>=1.8.0

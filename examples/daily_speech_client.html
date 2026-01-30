@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speech Avatar - IntelliAvatar</title>
+    <script crossorigin src="https://unpkg.com/@daily-co/daily-js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .setup-section {
+            margin-bottom: 30px;
+        }
+
+        .setup-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            color: #666;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff3838;
+        }
+
+        #video-container {
+            display: none;
+            margin-top: 30px;
+        }
+
+        #daily-frame {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .status.info {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .status.success {
+            background: #e8f5e9;
+            color: #388e3c;
+        }
+
+        .status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status.listening {
+            background: #fff3e0;
+            color: #f57c00;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .instructions {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .instructions h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .instructions ol {
+            margin-left: 20px;
+            color: #666;
+        }
+
+        .instructions li {
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Speech Avatar</h1>
+            <p>Talk to your AI avatar in real-time</p>
+        </div>
+
+        <div class="content">
+            <!-- Setup Section -->
+            <div id="setup-section" class="setup-section">
+                <h2>Setup</h2>
+                
+                <div class="input-group">
+                    <label for="api-url">API URL</label>
+                    <input type="text" id="api-url" value="http://localhost:8001" placeholder="http://localhost:8001">
+                </div>
+
+                <div class="input-group">
+                    <label for="api-key">API Key</label>
+                    <input type="text" id="api-key" placeholder="your-api-key-here">
+                </div>
+
+                <button class="btn btn-primary" onclick="startSession()">
+                    Start Conversation
+                </button>
+
+                <div class="instructions">
+                    <h3>📋 Instructions</h3>
+                    <ol>
+                        <li>Enter your API URL and API key</li>
+                        <li>Click "Start Conversation" to create a session</li>
+                        <li>Allow microphone access when prompted</li>
+                        <li>The avatar will appear and start listening</li>
+                        <li>Speak naturally - the avatar will respond</li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Video Container -->
+            <div id="video-container">
+                <button class="btn btn-danger" onclick="endSession()">
+                    End Conversation
+                </button>
+                <div id="daily-frame" style="width: 100%; height: 600px;"></div>
+            </div>
+
+            <!-- Status Messages -->
+            <div id="status" class="status hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        let callFrame = null;
+        let sessionId = null;
+
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            statusEl.classList.remove('hidden');
+        }
+
+        function hideStatus() {
+            const statusEl = document.getElementById('status');
+            statusEl.classList.add('hidden');
+        }
+
+        async function startSession() {
+            const apiUrl = document.getElementById('api-url').value;
+            const apiKey = document.getElementById('api-key').value;
+
+            if (!apiKey) {
+                showStatus('Please enter your API key', 'error');
+                return;
+            }
+
+            showStatus('Creating session...', 'info');
+
+            try {
+                // Create session via API
+                const response = await fetch(`${apiUrl}/api/v1/sessions/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': apiKey
+                    },
+                    body: JSON.stringify({
+                        avatar_id: 'default'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to create session');
+                }
+
+                const session = await response.json();
+                sessionId = session.session_id;
+
+                showStatus('Connecting to room...', 'info');
+
+                // Create Daily call frame
+                callFrame = window.DailyIframe.createFrame(
+                    document.getElementById('daily-frame'),
+                    {
+                        iframeStyle: {
+                            position: 'relative',
+                            width: '100%',
+                            height: '100%',
+                            border: 'none'
+                        },
+                        showLeaveButton: false,
+                        showFullscreenButton: true
+                    }
+                );
+
+                // Set up event listeners
+                callFrame.on('joined-meeting', () => {
+                    showStatus('🎤 Listening... Speak to the avatar!', 'listening');
+                    document.getElementById('setup-section').style.display = 'none';
+                    document.getElementById('video-container').style.display = 'block';
+                });
+
+                callFrame.on('left-meeting', () => {
+                    endSession();
+                });
+
+                callFrame.on('error', (error) => {
+                    console.error('Daily error:', error);
+                    const errorMessage = error?.errorMsg || error?.message || JSON.stringify(error) || 'Unknown error';
+                   showStatus(`Error: ${errorMessage}`, 'error');
+                    // Don't automatically end session on error - let user decide
+                });
+
+                // Join the room
+                console.log('Joining Daily.co room:', session.webrtc_url);
+                console.log('Token:', session.webrtc_token ? 'Present' : 'Missing');
+                
+                await callFrame.join({
+                    url: session.webrtc_url,
+                    token: session.webrtc_token,
+                    userName: 'User'
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`Error: ${error.message}`, 'error');
+                
+                // Cleanup on error
+                if (callFrame) {
+                    callFrame.destroy();
+                    callFrame = null;
+                }
+            }
+        }
+
+        async function endSession() {
+            if (callFrame) {
+                await callFrame.leave();
+                callFrame.destroy();
+                callFrame = null;
+            }
+
+            if (sessionId) {
+                const apiUrl = document.getElementById('api-url').value;
+                const apiKey = document.getElementById('api-key').value;
+
+                try {
+                    await fetch(`${apiUrl}/api/v1/sessions/${sessionId}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-API-Key': apiKey
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error deleting session:', error);
+                }
+
+                sessionId = null;
+            }
+
+            document.getElementById('setup-section').style.display = 'block';
+            document.getElementById('video-container').style.display = 'none';
+            showStatus('Session ended', 'info');
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', endSession);
+    </script>
+</body>
+</html>
