@@ -24,7 +24,7 @@ from pipecat.processors.frame_processor import FrameProcessor
 from pipecat.frames.frames import (
     Frame,
     AudioRawFrame,
-    VideoFrame,
+    ImageRawFrame,
     StartFrame,
     EndFrame,
     SystemFrame
@@ -234,7 +234,7 @@ class MuseTalkProcessor(FrameProcessor):
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 
                 # Create video frame
-                video_frame = VideoFrame(
+                video_frame = ImageRawFrame(
                     image=frame_rgb.tobytes(),
                     size=(frame.shape[1], frame.shape[0]),
                     format="RGB"
@@ -264,7 +264,7 @@ class MuseTalkProcessor(FrameProcessor):
             2
         )
         
-        video_frame = VideoFrame(
+        video_frame = ImageRawFrame(
             image=frame_data.tobytes(),
             size=(width, height),
             format="RGB"
