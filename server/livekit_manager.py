@@ -3,6 +3,7 @@ LiveKit room and token management for IntelliAvatar Service.
 Replaces Daily.co for WebRTC infrastructure.
 """
 import logging
+from datetime import timedelta
 from livekit import api
 from config import settings
 
@@ -39,7 +40,7 @@ class LiveKitManager:
         token = api.AccessToken(self.api_key, self.api_secret)
         token.with_identity(participant_name)
         token.with_name(participant_name)
-        token.with_ttl(ttl_seconds)
+        token.with_ttl(timedelta(seconds=ttl_seconds))
         
         # Grant room permissions
         grant = api.VideoGrants(
