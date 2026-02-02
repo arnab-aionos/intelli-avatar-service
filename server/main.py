@@ -3,15 +3,18 @@ Pipecat WebRTC server for real-time avatar streaming.
 
 This server handles WebRTC connections and orchestrates the AI pipeline:
 Audio Input → ChatGPT → EdgeTTS → MuseTalk → Video Output
+
+Uses LiveKit for WebRTC infrastructure.
 """
 import asyncio
 import logging
 from pathlib import Path
+from typing import Optional
 
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineTask
-from pipecat.transports.services.daily import DailyTransport, DailyParams
+from pipecat.transports.services.livekit import LiveKitTransport, LiveKitParams
 from pipecat.services.openai import OpenAILLMService
 from pipecat.processors.aggregators.llm_response import (
     LLMAssistantResponseAggregator,
@@ -37,18 +40,19 @@ class AvatarPipeline:
     Main pipeline for avatar streaming.
     
     Orchestrates:
-    1. Audio input from WebRTC
-    2. Speech-to-text (via Daily)
+    1. Audio input from WebRTC (via LiveKit)
+    2. Speech-to-text
     3. LLM response generation (ChatGPT)
-    4. Text-to-speech (via Daily)
+    4. Text-to-speech
     5. Avatar video generation (MuseTalk)
     6. Video output to WebRTC
     """
     
     def __init__(
         self,
-        room_url: str,
+        room_name: str,
         token: str,
+        livekit_url: str,
         avatar_image: str = None,
         system_prompt: str = None
     ):
@@ -56,18 +60,20 @@ class AvatarPipeline:
         Initialize avatar pipeline.
         
         Args:
-            room_url: Daily.co room URL for WebRTC
-            token: Daily.co authentication token
+            room_name: LiveKit room name
+            token: LiveKit access token
+            livekit_url: LiveKit WebSocket URL
             avatar_image: Path to avatar image
             system_prompt: System prompt for LLM
         """
-        self.room_url = room_url
+        self.room_name = room_name
         self.token = token
+        self.livekit_url = livekit_url
         self.avatar_image = avatar_image
         self.system_prompt = system_prompt or self._default_system_prompt()
         
         # Pipeline components
-        self.transport: Optional[DailyTransport] = None
+        self.transport: Optional[LiveKitTransport] = None
         self.llm_service: Optional[OpenAILLMService] = None
         self.avatar_processor: Optional[MuseTalkProcessor] = None
         self.pipeline: Optional[Pipeline] = None
@@ -85,27 +91,25 @@ class AvatarPipeline:
         """Initialize all pipeline components."""
         logger.info("🔧 Initializing avatar pipeline...")
         
-        # Initialize Daily transport (handles WebRTC + STT + TTS)
-        logger.info("📡 Step 1/4: Initializing Daily.co transport...")
+        # Initialize LiveKit transport
+        logger.info("📡 Step 1/4: Initializing LiveKit transport...")
         try:
-            self.transport = DailyTransport(
-                self.room_url,
-                self.token,
-                "Avatar Bot",
-                DailyParams(
+            self.transport = LiveKitTransport(
+                url=self.livekit_url,
+                token=self.token,
+                room_name=self.room_name,
+                params=LiveKitParams(
                     audio_in_enabled=True,
                     audio_out_enabled=True,
                     video_out_enabled=True,
-                    transcription_enabled=True,
                     vad_enabled=True,
                     vad_audio_passthrough=True
                 )
             )
-            logger.info("✅ Daily transport initialized")
+            logger.info("✅ LiveKit transport initialized")
         except Exception as e:
-            logger.error(f"❌ Failed to initialize Daily transport: {e}", exc_info=True)
+            logger.error(f"❌ Failed to initialize LiveKit transport: {e}", exc_info=True)
             raise
-        
         
         # Initialize Azure OpenAI LLM
         logger.info("🤖 Step 2/4: Initializing Azure OpenAI LLM...")
@@ -119,11 +123,9 @@ class AvatarPipeline:
                 api_version=settings.azure_openai_api_version
             )
             
-            # Note: Pipecat's OpenAILLMService needs to be configured for Azure
-            # This might need adjustment based on Pipecat version
             self.llm_service = OpenAILLMService(
                 api_key=settings.azure_openai_key,
-                model=settings.azure_openai_deployment,  # Use deployment name for Azure
+                model=settings.azure_openai_deployment,
                 system_prompt=self.system_prompt
             )
             
@@ -141,7 +143,6 @@ class AvatarPipeline:
                 )
             else:
                 raise RuntimeError("No valid OpenAI configuration found")
-        
         
         # Initialize MuseTalk processor
         logger.info("🎭 Step 3/4: Initializing MuseTalk processor...")
@@ -172,7 +173,7 @@ class AvatarPipeline:
             # Create pipeline task
             task = PipelineTask(
                 self.pipeline,
-                params=DailyParams(
+                params=LiveKitParams(
                     audio_out_enabled=True,
                     video_out_enabled=True
                 )
@@ -191,7 +192,7 @@ class AvatarPipeline:
     
     async def run(self):
         """Run the pipeline."""
-        logger.info(f"🎬 Starting avatar pipeline for room: {self.room_url}")
+        logger.info(f"🎬 Starting avatar pipeline for room: {self.room_name}")
         
         try:
             # Initialize pipeline
@@ -199,17 +200,13 @@ class AvatarPipeline:
             
             logger.info("🚀 Running Pipecat pipeline - bot should join room soon...")
             
-            # Run with timeout to prevent hanging
-            await asyncio.wait_for(
-                self.runner.run(task),
-                timeout=None  # No timeout for now - session can be long
-            )
+            # Run pipeline
+            await self.runner.run(task)
             
-        except asyncio.TimeoutError:
-            logger.error("⏱️ Pipeline execution timed out")
-            raise
+        except asyncio.CancelledError:
+            logger.info("🛑 Pipeline cancelled")
         except Exception as e:
-           logger.error(f"❌ Pipeline error: {e}", exc_info=True)
+            logger.error(f"❌ Pipeline error: {e}", exc_info=True)
             raise
         finally:
             logger.info("🏁 Pipeline execution ended")
@@ -234,11 +231,9 @@ async def main():
     For production, use the REST API to create sessions dynamically.
     This is for testing purposes.
     """
-    # For testing, you'd need to create a Daily.co room first
-    # This is just a placeholder
-    
     logger.info("Starting IntelliAvatar Service (WebRTC Server)")
     logger.info(f"Server configured for {settings.musetalk_device} mode")
+    logger.info(f"LiveKit URL: {settings.livekit_url}")
     
     if settings.musetalk_device == "cpu":
         logger.warning(
@@ -246,8 +241,6 @@ async def main():
             "GPU is required for real-time avatar generation."
         )
     
-    # In production, rooms are created via REST API
-    # This would be called from the API layer
     logger.info(
         "WebRTC server ready. "
         "Use the REST API to create sessions and rooms."

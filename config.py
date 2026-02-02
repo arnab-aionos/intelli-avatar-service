@@ -22,7 +22,12 @@ class Settings(BaseSettings):
     
     # Other API keys
     groq_api_key: str = Field(default="", env="GROQ_API_KEY")
-    daily_api_key: str = Field(..., env="DAILY_API_KEY")
+    daily_api_key: str = Field(default="", env="DAILY_API_KEY")  # Optional now
+    
+    # LiveKit Configuration
+    livekit_url: str = Field(..., env="LIVEKIT_URL")
+    livekit_api_key: str = Field(..., env="LIVEKIT_API_KEY")
+    livekit_api_secret: str = Field(..., env="LIVEKIT_API_SECRET")
     
     # Server Configuration
     server_host: str = Field(default="0.0.0.0", env="SERVER_HOST")
