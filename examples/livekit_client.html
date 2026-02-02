@@ -306,7 +306,7 @@
         }
 
         function updateParticipantCount() {
-            if (room) {
+            if (room && room.participants) {
                 const count = room.participants.size + 1; // +1 for local participant
                 document.getElementById('participant-count').textContent = count;
             }
