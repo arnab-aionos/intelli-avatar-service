@@ -1,5 +1,5 @@
 # Core Dependencies
-pipecat-ai>=0.0.40
+pipecat-ai[livekit]>=0.0.40
 fastapi>=0.110.0
 uvicorn[standard]>=0.27.0
 python-dotenv>=1.0.0

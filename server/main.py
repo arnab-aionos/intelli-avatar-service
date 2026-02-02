@@ -14,7 +14,7 @@ from typing import Optional
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineTask
-from pipecat.transports.services.livekit import LiveKitTransport, LiveKitParams
+from pipecat.transports.livekit.transport import LiveKitTransport, LiveKitParams
 from pipecat.services.openai import OpenAILLMService
 from pipecat.processors.aggregators.llm_response import (
     LLMAssistantResponseAggregator,

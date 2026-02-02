@@ -272,8 +272,17 @@
             }
             
             // If served via nginx (production)
-            // Assumes the HTML is served at /intelli-avatar and API at /intelli-avatar/api
-            const basePath = loc.pathname.replace(/\/[^/]*$/, ''); // Remove filename
+            // The HTML is served at /intelli-avatar, so API is at /intelli-avatar/api
+            // Use pathname directly (e.g., /intelli-avatar → /intelli-avatar/api)
+            let basePath = loc.pathname;
+            // Remove trailing slash if present
+            if (basePath.endsWith('/')) {
+                basePath = basePath.slice(0, -1);
+            }
+            // Remove .html extension if present (for direct file access)
+            if (basePath.endsWith('.html')) {
+                basePath = basePath.replace(/\/[^/]+\.html$/, '');
+            }
             return `${loc.protocol}//${loc.host}${basePath}/api`;
         }
 
