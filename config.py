@@ -15,19 +15,24 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
     
     # Azure OpenAI (using Azure Foundry)
-    azure_openai_key: str = Field(..., env="AZURE_OPENAI_KEY")
-    azure_openai_endpoint: str = Field(..., env="AZURE_OPENAI_ENDPOINT")
+    azure_openai_key: str = Field(default="", env="AZURE_OPENAI_KEY")
+    azure_openai_endpoint: str = Field(default="", env="AZURE_OPENAI_ENDPOINT")
     azure_openai_deployment: str = Field(default="gpt-4o", env="AZURE_OPENAI_DEPLOYMENT")
     azure_openai_api_version: str = Field(default="2024-02-01", env="AZURE_OPENAI_API_VERSION")
+    
+    # Self-hosted LLM (AIONOS H200 cluster)
+    self_hosted_llm_url: str = Field(default="http://154.201.127.0:5000/v1", env="SELF_HOSTED_LLM_URL")
+    self_hosted_llm_model: str = Field(default="self-hosted", env="SELF_HOSTED_LLM_MODEL")
+    use_self_hosted_llm: bool = Field(default=True, env="USE_SELF_HOSTED_LLM")
     
     # Other API keys
     groq_api_key: str = Field(default="", env="GROQ_API_KEY")
     daily_api_key: str = Field(default="", env="DAILY_API_KEY")  # Optional now
     
-    # LiveKit Configuration
-    livekit_url: str = Field(..., env="LIVEKIT_URL")
-    livekit_api_key: str = Field(..., env="LIVEKIT_API_KEY")
-    livekit_api_secret: str = Field(..., env="LIVEKIT_API_SECRET")
+    # LiveKit Configuration (optional - not used in WebSocket mode)
+    livekit_url: str = Field(default="", env="LIVEKIT_URL")
+    livekit_api_key: str = Field(default="", env="LIVEKIT_API_KEY")
+    livekit_api_secret: str = Field(default="", env="LIVEKIT_API_SECRET")
     
     # Server Configuration
     server_host: str = Field(default="0.0.0.0", env="SERVER_HOST")

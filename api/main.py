@@ -1,15 +1,13 @@
 """
-FastAPI application for IntelliAvatar Service REST API.
+FastAPI application for IntelliAvatar Service.
 
-Provides endpoints for:
-- Session management (WebRTC)
-- Avatar configuration
-- Asynchronous video generation
-- Authentication
+Provides:
+- WebSocket endpoint for real-time avatar conversation
+- REST endpoints for session management, avatar config, video generation
 """
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -19,6 +17,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from config import settings
 from api.routes import sessions, avatars, generation, auth
+from server.websocket_handler import avatar_handler
 
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
@@ -94,6 +93,19 @@ async def health_check():
         "models_path": str(settings.musetalk_models_full_path),
         "models_exist": settings.musetalk_models_full_path.exists()
     }
+
+
+@app.websocket("/ws/avatar")
+async def websocket_avatar(websocket: WebSocket):
+    """
+    WebSocket endpoint for real-time avatar conversation.
+    
+    Protocol:
+    - Client sends audio chunks as JSON: {"type": "audio_chunk", "data": "<base64>"}
+    - Client signals end of speech: {"type": "end_of_speech"}
+    - Server responds with video frames: {"type": "video_frame", "data": "<base64>"}
+    """
+    await avatar_handler.handle_connection(websocket)
 
 
 @app.exception_handler(Exception)

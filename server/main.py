@@ -13,7 +13,7 @@ from typing import Optional
 
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
-from pipecat.pipeline.task import PipelineTask
+from pipecat.pipeline.task import PipelineTask, PipelineParams
 from pipecat.transports.livekit.transport import LiveKitTransport, LiveKitParams
 from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.processors.aggregators.llm_response import (
@@ -173,9 +173,9 @@ class AvatarPipeline:
             # Create pipeline task
             task = PipelineTask(
                 self.pipeline,
-                params=LiveKitParams(
-                    audio_out_enabled=True,
-                    video_out_enabled=True
+                params=PipelineParams(
+                    allow_interruptions=True,
+                    enable_metrics=True
                 )
             )
             logger.info("✅ Pipeline task created")
